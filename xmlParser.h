@@ -15,9 +15,10 @@ class xmlParseRule{
 	public:
 
 		/*	Constructor */
-		xmlParseRule(){uintValue = NULL, ucharValue = NULL, isStr = false;}
-		xmlParseRule(const char *k, unsigned int *v) {key = k, uintValue = v, isStr = false;}
-		xmlParseRule(const char *k, unsigned char *v){key = k, ucharValue = v, isStr = true;}		
+		xmlParseRule(){init();}
+		xmlParseRule(const char *k, double *v){init(); key = k, doubleValue = v;}
+		xmlParseRule(const char *k, unsigned int *v) {init(); key = k, uintValue = v;}
+		xmlParseRule(const char *k, unsigned char *v){init(); key = k, ucharValue = v, isStr = true;}		
 
 		/*	Check this rule is valid */
 		bool check(void);
@@ -25,8 +26,13 @@ class xmlParseRule{
 		/* Data */
 		string key;
 		bool isStr;
+		double *doubleValue;
 		unsigned int *uintValue;
 		unsigned char *ucharValue;	
+
+	private:
+
+		void init(){isStr = false, doubleValue = NULL, uintValue = NULL, ucharValue = NULL;};
 };
 
 std::ostream& operator<<(std::ostream &out, const xmlParseRule &rule);
@@ -55,8 +61,6 @@ class xmlParser{
 
 		/*	Add  xml parsing rules */
 		void addRule(const xmlParseRule &rule);
-		void addRule(const char *key, unsigned int *value);
-		void addRule(const char *key, unsigned char *value);
 
 		/*	xml parser root node */
 		XMLElement *root;

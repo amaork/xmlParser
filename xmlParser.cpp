@@ -32,7 +32,7 @@ bool xmlParseRule::check(void)
 	}
 	
 	/*	Check value target */	
-	if ((isStr && !ucharValue) || (!isStr && !uintValue)){
+	if ((isStr && !ucharValue) ||( (!isStr && !uintValue) && (!isStr && !doubleValue))){
 
 		cerr << "Rule error: value is invalid!" << endl;
 		return false;
@@ -73,18 +73,6 @@ xmlParser::xmlParser(const string &desc, XMLElement *node)
 /**************************************************************************************
 	@brief	Add xml parse rule, value is an integer type 
 **************************************************************************************/
-void xmlParser::addRule(const char *key, unsigned int *value)
-{
-	/*	Add new parse rule to parser rule linklist */	
-	parserRules.push_back(xmlParseRule(key, value));	
-}
-
-void xmlParser::addRule(const char *key, unsigned char *value)
-{
-	/*	Add new parse rule to parser rule linklist */	
-	parserRules.push_back(xmlParseRule(key, value));	
-}
-
 void xmlParser::addRule(const xmlParseRule &rule)
 {
 	parserRules.push_back(rule);
@@ -178,16 +166,20 @@ bool xmlParser::parse(bool debug, ostream &debug_os)
 			continue;
 		}
 	
-		/*	Read key value */
+		/* Value is a string */
 		if (rule->isStr && rule->ucharValue){
 
-			/* Value is a string */
 			bcopy(value, rule->ucharValue, strlen(value));
 		}
+		/* Value is a integer */
 		else if (rule->uintValue){
 
-			/* Value is a integer */
 			*rule->uintValue = atoi(value);
+		}
+		/* Value is a double */
+		else if (rule->doubleValue){
+			
+			*rule->doubleValue = atof(value);
 		}
 
 		/* Debug output */	
@@ -197,9 +189,13 @@ bool xmlParser::parse(bool debug, ostream &debug_os)
 
 				debug_os << rule->key << ":" << rule->ucharValue << endl;
 			}
-			else{
+			else if (rule->uintValue){
 
 				debug_os << rule->key << ":" << *rule->uintValue << endl;
+			}
+			else if (rule->doubleValue){
+				
+				debug_os << rule->key << ":" << *rule->doubleValue << endl;
 			}
 		}	
 

@@ -16,12 +16,14 @@ int main(int argc, char **argv)
 	XMLElement* root = NULL;
 	XMLPrinter printer(stderr);
 
-	unsigned int number = 0;
 	unsigned char str[32];
+	double dvalue = 0.0;
+	unsigned int number = 0;
 	memset(str, 0, sizeof(str));
 	xmlParser *parser = NULL;
 	const char *xmlDoc =	"<ROOT>"
 							"<NUM>15</NUM>"
+							"<DOUBLE>1234.5678</DOUBLE>"
 							"<STRING>xmlParser</STRING>"
 							"</ROOT>";
 
@@ -43,15 +45,16 @@ int main(int argc, char **argv)
 	/* Create xmlParser and add parse rules */
 	parser = new xmlParser("TEST", root);
 	
-	parser->addRule("NUM", &number);
-	parser->addRule("STRING", str);
+	parser->addRule(xmlParseRule("NUM", &number));
+	parser->addRule(xmlParseRule("STRING", str));
+	parser->addRule(xmlParseRule("DOUBLE", &dvalue));
 
 	cout << *parser << endl;
 
 	/* Start parse */
-	if (parser->parse() == true){
+	if (parser->parse(true) == true){
 
-		cout << "Parse success:" << number << "," << str << endl;
+		cout << "Parse success:" << number << "," << str << "," << dvalue <<  endl;
 	}
 	else{
 

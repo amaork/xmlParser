@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 #include <algorithm>
-#include "xml_parser.h"
+#include "xmlParser.h"
 
 using namespace std;
 using namespace tinyxml2;
@@ -19,7 +19,7 @@ int main(int argc, char **argv)
 	unsigned int number = 0;
 	unsigned char str[32];
 	memset(str, 0, sizeof(str));
-	XML_PARSER	*parser = NULL;
+	xmlParser *parser = NULL;
 	const char *xmlDoc =	"<ROOT>"
 							"<NUM>15</NUM>"
 							"<STRING>xmlParser</STRING>"
@@ -41,10 +41,10 @@ int main(int argc, char **argv)
 	}
 
 	/* Create xmlParser and add parse rules */
-	parser = new XML_PARSER("TEST", root);
+	parser = new xmlParser("TEST", root);
 	
-	parser->add_rule("NUM", &number);
-	parser->add_rule("STRING", str);
+	parser->addRule("NUM", &number);
+	parser->addRule("STRING", str);
 
 	cout << *parser << endl;
 

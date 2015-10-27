@@ -1,28 +1,28 @@
-#include "xml_parser.h"
+#include "xmlParser.h"
 #include <strings.h>
 #include <algorithm>
 
 /**************************************************************************************
 	@brief	:	struct parse_rule operator== mothed	
 **************************************************************************************/
-bool operator== (const XML_PARSE_RULE &lhs, const XML_PARSE_RULE &hhs)
+bool operator== (const xmlParseRule &lhs, const xmlParseRule &hhs)
 {
-	return ((lhs.key == hhs.key) && (lhs.is_str == hhs.is_str));
+	return ((lhs.key == hhs.key) && (lhs.isStr == hhs.isStr));
 }
 
 /**************************************************************************************
 	@brief	:	Overloaded operator << 
 **************************************************************************************/
-std::ostream& operator<<(std::ostream &out, const XML_PARSE_RULE &rule) 
+std::ostream& operator<<(std::ostream &out, const xmlParseRule &rule) 
 {
-	out << "is_str\t" << rule.is_str << "\tkey:\t" << rule.key << endl; 
+	out << "isStr\t" << rule.isStr << "\tkey:\t" << rule.key << endl; 
 	return out;
 }
 
 /**************************************************************************************
 	@breif	:	Parse rule check
 ***************************************************************************************/
-bool XML_PARSE_RULE::check(void)
+bool xmlParseRule::check(void)
 {
 	/* 	Check key */
 	if (!key.size()){
@@ -32,7 +32,7 @@ bool XML_PARSE_RULE::check(void)
 	}
 	
 	/*	Check value target */	
-	if ((is_str && !c_value) || (!is_str && !i_value)){
+	if ((isStr && !ucharValue) || (!isStr && !uintValue)){
 
 		cerr << "Rule error: value is invalid!" << endl;
 		return false;
@@ -45,26 +45,26 @@ bool XML_PARSE_RULE::check(void)
 /**************************************************************************************
 	@brief	:	Constructor
 **************************************************************************************/
-XML_PARSER::XML_PARSER(const string &desc)
+xmlParser::xmlParser(const string &desc)
 {
 	/* 	Set parser name */
-	parser_desc = desc;
+	parserDesc = desc;
 	
 	/* 	Clear parser rules */
-	parser_rules.clear();
+	parserRules.clear();
 
 	/*	Clear xml parser root */
 	root = NULL;
 }
 
 
-XML_PARSER::XML_PARSER(const string &desc, XMLElement *node)
+xmlParser::xmlParser(const string &desc, XMLElement *node)
 {
 	/* 	Set parser name */
-	parser_desc = desc;
+	parserDesc = desc;
 	
 	/* 	Clear parser rules */
-	parser_rules.clear();
+	parserRules.clear();
 
 	/*	Clear xml parser root */
 	root = node;
@@ -73,40 +73,40 @@ XML_PARSER::XML_PARSER(const string &desc, XMLElement *node)
 /**************************************************************************************
 	@brief	Add xml parse rule, value is an integer type 
 **************************************************************************************/
-void XML_PARSER::add_rule(const char *key, unsigned int *value)
+void xmlParser::addRule(const char *key, unsigned int *value)
 {
 	/*	Add new parse rule to parser rule linklist */	
-	parser_rules.push_back(XML_PARSE_RULE(key, value));	
+	parserRules.push_back(xmlParseRule(key, value));	
 }
 
-void XML_PARSER::add_rule(const char *key, unsigned char *value)
+void xmlParser::addRule(const char *key, unsigned char *value)
 {
 	/*	Add new parse rule to parser rule linklist */	
-	parser_rules.push_back(XML_PARSE_RULE(key, value));	
+	parserRules.push_back(xmlParseRule(key, value));	
 }
 
-void XML_PARSER::add_rule(const XML_PARSE_RULE &rule)
+void xmlParser::addRule(const xmlParseRule &rule)
 {
-	parser_rules.push_back(rule);
+	parserRules.push_back(rule);
 }
 
 
 /**************************************************************************************
 	@brief	:	Parser self check 
 **************************************************************************************/
-bool XML_PARSER::check(void)
+bool xmlParser::check(void)
 {
 	/*	Check parser rules */
-	if (parser_rules.empty()){
+	if (parserRules.empty()){
 
-		cerr << "Parser[" << parser_desc << "] parse rules linklist is empty!" << endl;
+		cerr << "Parser[" << parserDesc << "] parse rules linklist is empty!" << endl;
 		return false; 
 	}
 
 	/*	Check parser root node */
 	if (!root){
 
-		cerr << "Parser[" << parser_desc << "] parse root node unset!" << endl;
+		cerr << "Parser[" << parserDesc << "] parse root node unset!" << endl;
 		return false;
 	}
 
@@ -117,18 +117,18 @@ bool XML_PARSER::check(void)
 /**************************************************************************************
 	@brief:	overloaded operator <<  
 **************************************************************************************/
-std::ostream& operator<<(std::ostream &out, const XML_PARSER &parser) 
+std::ostream& operator<<(std::ostream &out, const xmlParser &parser) 
 {
-	Parser_rule::const_iterator rule_it;
+	ParserRules::const_iterator rule_it;
 
 	out << "=============================================================" << endl; 
 	out << "Parser info" << endl;
-	out << "Name:\t\t" << parser.parser_desc << endl;
-	out << "Rules num:\t" << parser.parser_rules.size() << endl;
+	out << "Name:\t\t" << parser.parserDesc << endl;
+	out << "Rules num:\t" << parser.parserRules.size() << endl;
 	out << "Root node name:\t" << parser.root->Value() << endl;
 
 	/*	Print every rules */
-	for (rule_it = parser.parser_rules.begin(); rule_it != parser.parser_rules.end(); rule_it++){
+	for (rule_it = parser.parserRules.begin(); rule_it != parser.parserRules.end(); rule_it++){
 			
 			out << *rule_it << endl;
 	}
@@ -139,11 +139,11 @@ std::ostream& operator<<(std::ostream &out, const XML_PARSER &parser)
 /**************************************************************************************
 	@brief	:	Parsing xml according rules, after parsing delete the rule  
 **************************************************************************************/
-bool XML_PARSER::parse(bool debug, ostream &debug_os)
+bool xmlParser::parse(bool debug, ostream &debug_os)
 {
 	XMLElement *key = NULL;
 	const char *value = NULL;
-	Parser_rule::iterator rule;
+	ParserRules::iterator rule;
 
 	/*	Check parser is ready */
 	if (!check()) return false;
@@ -152,8 +152,8 @@ bool XML_PARSER::parse(bool debug, ostream &debug_os)
 	if (debug)
 		debug_os << "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++" << endl; 		
 
-	/* 	Parser each rule form parser_rules */
-	for (rule = parser_rules.begin(); rule != parser_rules.end(); rule++){
+	/* 	Parser each rule form parserRules */
+	for (rule = parserRules.begin(); rule != parserRules.end(); rule++){
 
 		/*	Check rule */
 		if (!rule->check())continue;
@@ -164,7 +164,7 @@ bool XML_PARSER::parse(bool debug, ostream &debug_os)
 		/* 	Key is find ? */
 		if (!key){
 
-			cerr << "Parser[" << parser_desc << "]\tUndefined key:" << rule->key << endl;
+			cerr << "Parser[" << parserDesc << "]\tUndefined key:" << rule->key << endl;
 			continue;
 		}
 
@@ -174,32 +174,32 @@ bool XML_PARSER::parse(bool debug, ostream &debug_os)
 		/* 	Find key value ? */
 		if (!value){
 
-			cerr << "Parser[" << parser_desc << "]\tKey[" << rule->key << "] value is empty!" << endl;
+			cerr << "Parser[" << parserDesc << "]\tKey[" << rule->key << "] value is empty!" << endl;
 			continue;
 		}
 	
 		/*	Read key value */
-		if (rule->is_str && rule->c_value){
+		if (rule->isStr && rule->ucharValue){
 
 			/* Value is a string */
-			bcopy(value, rule->c_value, strlen(value));
+			bcopy(value, rule->ucharValue, strlen(value));
 		}
-		else if (rule->i_value){
+		else if (rule->uintValue){
 
 			/* Value is a integer */
-			*rule->i_value = atoi(value);
+			*rule->uintValue = atoi(value);
 		}
 
 		/* Debug output */	
 		if (debug){
 
-			if (rule->is_str){
+			if (rule->isStr){
 
-				debug_os << rule->key << ":" << rule->c_value << endl;
+				debug_os << rule->key << ":" << rule->ucharValue << endl;
 			}
 			else{
 
-				debug_os << rule->key << ":" << *rule->i_value << endl;
+				debug_os << rule->key << ":" << *rule->uintValue << endl;
 			}
 		}	
 

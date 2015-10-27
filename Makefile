@@ -8,7 +8,7 @@ all:$(TARGETS)
 clean:
 	rm -rf *.o $(TARGETS) a.out depend.d 
 
-test:	tinyxml2.o test.o xml_parser.o
+test:	tinyxml2.o test.o xmlParser.o
 
 depend.d:$(SOURCES)
 	$(CC) -M $(CPPFLAGS) $^ > $@

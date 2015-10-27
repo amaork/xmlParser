@@ -16,9 +16,9 @@ class xmlParseRule{
 
 		/*	Constructor */
 		xmlParseRule(){init();}
+		xmlParseRule(const char *k, int *v) {init(); key = k, intValue = v;}
 		xmlParseRule(const char *k, double *v){init(); key = k, doubleValue = v;}
-		xmlParseRule(const char *k, unsigned int *v) {init(); key = k, uintValue = v;}
-		xmlParseRule(const char *k, unsigned char *v){init(); key = k, ucharValue = v, isStr = true;}		
+		xmlParseRule(const char *k, char *v){init(); key = k, charValue = v, isStr = true;}
 
 		/*	Check this rule is valid */
 		bool check(void);
@@ -26,13 +26,13 @@ class xmlParseRule{
 		/* Data */
 		string key;
 		bool isStr;
+		int *intValue;
+		char *charValue;
 		double *doubleValue;
-		unsigned int *uintValue;
-		unsigned char *ucharValue;	
 
 	private:
 
-		void init(){isStr = false, doubleValue = NULL, uintValue = NULL, ucharValue = NULL;};
+		void init(){isStr = false, doubleValue = NULL, intValue = NULL, charValue = NULL;};
 };
 
 std::ostream& operator<<(std::ostream &out, const xmlParseRule &rule);
@@ -48,34 +48,25 @@ class xmlParser{
 
 		/*	Constructor */
 		xmlParser(const string &desc);
-		xmlParser(const string &desc, XMLElement *node);
 
 		/*	Parse xml */
-		bool parse(bool debug = false, ostream &debug_os = cerr);
-
-		/* 	Set xml root node */	
-		void setRoot(XMLElement *node){ root = node;}
-
-		/*	Set parser desc */
-		void setDesc(const string &desc) {parserDesc = desc;}
+		bool parseAttr(XMLElement *root, bool debug = false, ostream &debugOS = cerr);
+		bool parseValue(XMLElement *root, bool debug = false, ostream &debug_os = cerr);
 
 		/*	Add  xml parsing rules */
 		void addRule(const xmlParseRule &rule);
-
-		/*	xml parser root node */
-		XMLElement *root;
+		void addAttrRule(const xmlParseRule &rule);
 
 		/*	xml parser desc */
 		string parserDesc;
 
 		/*	xml parse rules */
-		ParserRules  parserRules;
+		ParserRules  attrParserRules;
+		ParserRules  valueParserRules;
 
 	private:
-
-		/*	Check parser */
-		bool check(void);
-
+		/*	Check parser rules*/
+		bool checkRules(const XMLElement *root, const ParserRules &rules);
 };
 
 std::ostream& operator<<(std::ostream &out, const xmlParser &parser);

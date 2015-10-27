@@ -16,15 +16,16 @@ int main(int argc, char **argv)
 	XMLElement* root = NULL;
 	XMLPrinter printer(stderr);
 
-	unsigned char str[32];
+	char str[32];
 	double dvalue = 0.0;
-	unsigned int number = 0;
+	int number = 0;
 	memset(str, 0, sizeof(str));
 	xmlParser *parser = NULL;
 	const char *xmlDoc =	"<ROOT>"
-							"<NUM>15</NUM>"
+							"<NUM>20</NUM>"
 							"<DOUBLE>1234.5678</DOUBLE>"
 							"<STRING>xmlParser</STRING>"
+							"<ATTRIBUTE name = \"amaork\" age=\"27\" workage = \"6.7\"></ATTRIBUTE>"
 							"</ROOT>";
 
 
@@ -34,7 +35,7 @@ int main(int argc, char **argv)
 		cerr << "Parse from string error: " << xml.GetErrorStr1() << "," << xml.GetErrorStr2() << endl;
 		return -1;
 	}
-	
+
 	/*	Find root element */
 	if ((root = xml.RootElement()) == NULL){
 
@@ -43,26 +44,26 @@ int main(int argc, char **argv)
 	}
 
 	/* Create xmlParser and add parse rules */
-	parser = new xmlParser("TEST", root);
-	
+	parser = new xmlParser("TEST");
+
+	/* Start parse value */
 	parser->addRule(xmlParseRule("NUM", &number));
 	parser->addRule(xmlParseRule("STRING", str));
 	parser->addRule(xmlParseRule("DOUBLE", &dvalue));
 
-	cout << *parser << endl;
+	parser->parseValue(root, true);
 
-	/* Start parse */
-	if (parser->parse(true) == true){
+	/* Add parse attribute rules */
+	memset(str, 0, sizeof(str));
+	parser->addAttrRule(xmlParseRule("name", str));
+	parser->addAttrRule(xmlParseRule("age", &number));
+	parser->addAttrRule(xmlParseRule("workage", &dvalue));
 
-		cout << "Parse success:" << number << "," << str << "," << dvalue <<  endl;
-	}
-	else{
+	parser->parseAttr(root->FirstChildElement("ATTRIBUTE"), true);
 
-		cerr << "Parse error!!!!" << endl;
-	}
+
 
 	delete parser;
 
 	return 0;
 }
-

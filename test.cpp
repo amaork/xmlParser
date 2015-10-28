@@ -17,15 +17,23 @@ int main(int argc, char **argv)
 	XMLPrinter printer(stderr);
 
 	char str[32];
-	double dvalue = 0.0;
 	int number = 0;
+	int decNum = 0;
+	int octNum = 0;
+	int hexNum = 0;
+	int attrNum = 0;
+	double dvalue = 0.0;
 	memset(str, 0, sizeof(str));
-	xmlParser *parser = NULL;
+	xmlParser parser = xmlParser("TEST");
+
 	const char *xmlDoc =	"<ROOT>"
-							"<NUM>20</NUM>"
+							"<DEC>255</DEC>"
+							"<OCT>0377</OCT>"
+							"<HEX>0xff</HEX>"
+							"<NUM>ff</NUM>"
 							"<DOUBLE>1234.5678</DOUBLE>"
 							"<STRING>xmlParser</STRING>"
-							"<ATTRIBUTE name = \"amaork\" age=\"27\" workage = \"6.7\"></ATTRIBUTE>"
+							"<ATTRIBUTE dec = \"255\" oct=\"0377\" hex = \"0xff\" num = \"ff\" double = \"1234.5678\" str = \"xmlParser\">0x100</ATTRIBUTE>"
 							"</ROOT>";
 
 
@@ -44,26 +52,33 @@ int main(int argc, char **argv)
 	}
 
 	/* Create xmlParser and add parse rules */
-	parser = new xmlParser("TEST");
 
 	/* Start parse value */
-	parser->addRule(xmlParseRule("NUM", &number));
-	parser->addRule(xmlParseRule("STRING", str));
-	parser->addRule(xmlParseRule("DOUBLE", &dvalue));
-
-	parser->parseValue(root, true);
+	parser.addRule(xmlParseRule("DEC", &decNum));
+	parser.addRule(xmlParseRule("OCT", &octNum));
+	parser.addRule(xmlParseRule("HEX", &hexNum));
+	parser.addRule(xmlParseRule("NUM", &number, 16));
+	parser.addRule(xmlParseRule("STRING", str));
+	parser.addRule(xmlParseRule("DOUBLE", &dvalue));
+	parser.addRule(xmlParseRule("ATTRIBUTE", &attrNum));
+	parser.parseValue(root, true);
 
 	/* Add parse attribute rules */
 	memset(str, 0, sizeof(str));
-	parser->addAttrRule(xmlParseRule("name", str));
-	parser->addAttrRule(xmlParseRule("age", &number));
-	parser->addAttrRule(xmlParseRule("workage", &dvalue));
-
-	parser->parseAttr(root->FirstChildElement("ATTRIBUTE"), true);
+	decNum = octNum = hexNum = number = attrNum = dvalue = 0;
 
 
+	parser.addAttrRule(xmlParseRule("dec", &decNum));
+	parser.addAttrRule(xmlParseRule("oct", &octNum));
+	parser.addAttrRule(xmlParseRule("hex", &hexNum));
+	parser.addAttrRule(xmlParseRule("num", &number, 16));
+	parser.addAttrRule(xmlParseRule("str", str));
+	parser.addAttrRule(xmlParseRule("double", &dvalue));
 
-	delete parser;
+
+	parser.parseAttr(root->FirstChildElement("ATTRIBUTE"), true);
+
+
 
 	return 0;
 }

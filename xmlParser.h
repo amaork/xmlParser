@@ -14,25 +14,27 @@ class xmlParseRule{
 
 	public:
 
-		/*	Constructor */
+		/* Constructor */
 		xmlParseRule(){init();}
-		xmlParseRule(const char *k, int *v) {init(); key = k, intValue = v;}
+		xmlParseRule(const char *k, char *v){init(); key = k, charValue = v;}
 		xmlParseRule(const char *k, double *v){init(); key = k, doubleValue = v;}
-		xmlParseRule(const char *k, char *v){init(); key = k, charValue = v, isStr = true;}
-
-		/*	Check this rule is valid */
+		xmlParseRule(const char *k, int *v, int base = 0) {init(); key = k, intValue = v, intBase = base;}
+		
+		/* Check this rule is valid */
 		bool check(void);
+
+		/* Parse this rule */
+		bool parse(const char* value);
 
 		/* Data */
 		string key;
-		bool isStr;
 		int *intValue;
+		int intBase;
 		char *charValue;
 		double *doubleValue;
 
 	private:
-
-		void init(){isStr = false, doubleValue = NULL, intValue = NULL, charValue = NULL;};
+		void init(){doubleValue = NULL, intValue = NULL, charValue = NULL, intBase = 0;};
 };
 
 std::ostream& operator<<(std::ostream &out, const xmlParseRule &rule);

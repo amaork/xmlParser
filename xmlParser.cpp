@@ -1,15 +1,85 @@
 #include "xmlParser.h"
 #include <strings.h>
+#include <errno.h>
+#include <limits.h>
+#include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <algorithm>
 
-const char* debugSplit = "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++";
+
+/* Global */
+static const char* debugSplit = "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++";
+enum STRCONV_ERROR{CONV_SUCCESS, CONV_OVERFLOW, CONV_UNDERFLOW, CONV_INCONVERTIBLE};
+std::ostream& operator<<(std::ostream &out, const STRCONV_ERROR &error);
+
+enum STRCONV_ERROR str2int (int *i, char const *s, int base)
+{
+	char *end;
+	long  l;
+	errno = 0;
+	l = strtol(s, &end, base);
+					    
+	if ((errno == ERANGE && l == LONG_MAX) || l > INT_MAX) {
+		return CONV_OVERFLOW;
+	}
+	
+	if ((errno == ERANGE && l == LONG_MIN) || l < INT_MIN) {
+		return CONV_UNDERFLOW;
+	}
+	
+	if (*s == '\0' || *end != '\0') {
+		return CONV_INCONVERTIBLE;
+	}
+								
+	*i = l;
+	return CONV_SUCCESS;
+}
+
+enum STRCONV_ERROR str2double(double *i, char const *s)
+{
+	char *end;
+	double d;
+	errno = 0;
+	d = strtod(s, &end);
+
+	if ((errno == ERANGE && d == HUGE_VAL)){
+		return CONV_OVERFLOW;
+	}
+
+	if ((errno == ERANGE && d == 0)){
+		return CONV_UNDERFLOW;
+	}
+	
+	if (*s == '\0' || *end != '\0'){
+		return CONV_INCONVERTIBLE;
+	}
+
+	*i = d;
+	return CONV_SUCCESS;
+}
+
+
+std::ostream& operator<<(std::ostream &out, const STRCONV_ERROR &error)
+{
+	switch (error){
+
+		case	CONV_SUCCESS	:	out << "success" << endl;break;
+		case	CONV_OVERFLOW	:	out << "overflow" << endl;break;
+		case	CONV_UNDERFLOW	:	out << "underflow" << endl;break;
+		case	CONV_INCONVERTIBLE: out << "inconvertible" << endl;break;
+		default					:	out << "unknow status" << endl;break;
+	}
+
+	return out;
+}
 
 /**************************************************************************************
 	@brief	:	struct parse_rule operator== mothed
 **************************************************************************************/
 bool operator== (const xmlParseRule &lhs, const xmlParseRule &hhs)
 {
-	return ((lhs.key == hhs.key) && (lhs.isStr == hhs.isStr));
+	return ((lhs.key == hhs.key) && (lhs.intBase == hhs.intBase));
 }
 
 /**************************************************************************************
@@ -18,16 +88,16 @@ bool operator== (const xmlParseRule &lhs, const xmlParseRule &hhs)
 std::ostream& operator<<(std::ostream &out, const xmlParseRule &rule)
 {
 
-	out << "isStr\t" << rule.isStr << "\tkey:\t" << rule.key << "\tvalue\t";
+	out << "key:\t" << rule.key << "\tvalue\t";
 
-	if (rule.isStr){
+	if (rule.charValue){
 
 		out << rule.charValue << endl;
 
 	}
 	else if (rule.intValue){
 
-		out << *rule.intValue << endl;
+		out << *rule.intValue << "(" << rule.intBase << ")" <<  endl;
 	}
 	else if (rule.doubleValue){
 
@@ -50,10 +120,50 @@ bool xmlParseRule::check(void)
 	}
 
 	/*	Check value target */
-	if ((isStr && !charValue) ||( (!isStr && !intValue) && (!isStr && !doubleValue))){
+	if (!intValue && !charValue && !doubleValue){
 
 		cerr << "Rule error: value is invalid!" << endl;
 		return false;
+	}
+
+	return true;
+}
+
+/**************************************************************************************
+ * @brief	:	Parse value to different type
+ * ***********************************************************************************/
+bool xmlParseRule::parse(const char* value)
+{
+	int iValue = 0;
+	double dValue = 0;
+	enum STRCONV_ERROR result; 
+
+	/* Value is a string */
+	if (charValue){
+
+		memcpy(charValue, value, strlen(value));
+	}
+	/* Value is int value */
+	else if (intValue){
+
+		if ((result = str2int(&iValue, value, intBase)) != CONV_SUCCESS){
+				
+			cerr << "Parse[" << key << "]\t value is error: " << result << endl;
+			return false;
+		}
+		
+		*intValue = iValue;
+	}
+	/* Value is double or flost value */
+	else if (doubleValue){
+
+		if ((result = str2double(&dValue, value)) != CONV_SUCCESS){
+				
+			cerr << "Parse[" << key << "]\t value is error: " << result << endl;
+			return false;
+		}
+		
+		*doubleValue = dValue;
 	}
 
 	return true;
@@ -160,40 +270,21 @@ bool xmlParser::parseValue(XMLElement *root, bool debug, ostream &debugOS)
 		if (!rule->check())continue;
 
 		/* 	Find key */
-		key = root->FirstChildElement(rule->key.c_str());
-
-		/* 	Key is find ? */
-		if (!key){
+		if (!(key = root->FirstChildElement(rule->key.c_str()))){
 
 			cerr << "Parser[" << parserDesc << "]\tUndefined key:" << rule->key << endl;
 			continue;
 		}
 
-		/* 	Get key value */
-		value = key->ToElement()->GetText();
-
 		/* 	Find key value ? */
-		if (!value){
+		if (!(value = key->ToElement()->GetText())){
 
 			cerr << "Parser[" << parserDesc << "]\tKey[" << rule->key << "] value is empty!" << endl;
 			continue;
 		}
 
-		/* Value is a string */
-		if (rule->isStr && rule->charValue){
-
-			bcopy(value, rule->charValue, strlen(value));
-		}
-		/* Value is a integer */
-		else if (rule->intValue){
-
-			*rule->intValue = atoi(value);
-		}
-		/* Value is a double */
-		else if (rule->doubleValue){
-
-			*rule->doubleValue = atof(value);
-		}
+		/* Parse rule */ 
+		if (!rule->parse(value)) continue;
 
 		/* Debug output */
 		if (debug) debugOS << *rule << endl;
@@ -212,7 +303,7 @@ bool xmlParser::parseValue(XMLElement *root, bool debug, ostream &debugOS)
 **************************************************************************************/
 bool xmlParser::parseAttr(XMLElement *root, bool debug, ostream &debugOS)
 {
-	const char* value = NULL;
+	const char* attr = NULL;
 	ParserRules::iterator rule;
 
 	/* Check parser is ready */
@@ -227,35 +318,16 @@ bool xmlParser::parseAttr(XMLElement *root, bool debug, ostream &debugOS)
 		/* Check rule */
 		if (!rule->check())continue;
 
-		/* Find attribute, attribute is a string */
-		if (rule->isStr && rule->charValue){
+		/* Find attribute */ 
+		if ((attr = root->Attribute(rule->key.c_str())) == NULL){
 
-			if ((value = root->Attribute(rule->key.c_str())) == NULL){
-
-					cerr << "Parser[" << parserDesc << "]\tKey[" << rule->key << "] value is empty!" << endl;
-					continue;
-			}
-			else{
-
-					memcpy(rule->charValue, value, strlen(value));
-			}
+			cerr << "Parser[" << parserDesc << "]\tKey[" << rule->key << "] value is empty!" << endl;
+			continue;
 		}
-		else if (rule->intValue){
-
-				if (root->QueryIntAttribute(rule->key.c_str(), rule->intValue) != XML_NO_ERROR){
-
-					cerr << "Parser[" << parserDesc << "]\tKey[" << rule->key << "] value is empty!" << endl;
-					continue;
-				}
-		}
-		else if (rule->doubleValue){
-
-				if (root->QueryDoubleAttribute(rule->key.c_str(), rule->doubleValue) != XML_NO_ERROR){
-
-					cerr << "Parser[" << parserDesc << "]\tKey[" << rule->key << "] value is empty!" << endl;
-					continue;
-				}
-		}
+		
+		/* Parse attrValue */
+		if (!rule->parse(attr)) continue;
+			
 
 		/* Debug output */
 		if (debug) debugOS << *rule << endl;

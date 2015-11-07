@@ -20,7 +20,7 @@ int main(int argc, char **argv)
 	int number = 0;
 	int decNum = 0;
 	int octNum = 0;
-	int hexNum = 0;
+	uint32_t hexNum = 0;
 	int attrNum = 0;
 	double dvalue = 0.0;
 	memset(str, 0, sizeof(str));
@@ -33,7 +33,7 @@ int main(int argc, char **argv)
 							"<NUM>ff</NUM>"
 							"<DOUBLE>1234.5678</DOUBLE>"
 							"<STRING>xmlParser</STRING>"
-							"<ATTRIBUTE dec = \"255\" oct=\"0377\" hex = \"0xff\" num = \"ff\" double = \"1234.5678\" str = \"xmlParser\">0x100</ATTRIBUTE>"
+							"<ATTRIBUTE dec = \"255\" oct=\"0377\" hex = \"0xF9007703\" num = \"ff\" double = \"1234.5678\" str = \"xmlParser\">0x100</ATTRIBUTE>"
 							"</ROOT>";
 
 

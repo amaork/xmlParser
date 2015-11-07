@@ -4,6 +4,7 @@
 #include <vector>
 #include <string>
 #include <iostream>
+#include <stdint.h>
 #include "tinyxml2.h"
 
 using namespace std;
@@ -18,7 +19,8 @@ class xmlParseRule{
 		xmlParseRule(){init();}
 		xmlParseRule(const char *k, char *v){init(); key = k, charValue = v;}
 		xmlParseRule(const char *k, double *v){init(); key = k, doubleValue = v;}
-		xmlParseRule(const char *k, int *v, int base = 0) {init(); key = k, intValue = v, intBase = base;}
+		xmlParseRule(const char *k, int32_t *v, int base = 0) {init(); key = k, intValue = v, intBase = base;}
+		xmlParseRule(const char *k, uint32_t *v, int base = 0) {init(); key = k, uintValue = v, intBase = base;}
 		
 		/* Check this rule is valid */
 		bool check(void);
@@ -28,13 +30,15 @@ class xmlParseRule{
 
 		/* Data */
 		string key;
-		int *intValue;
 		int intBase;
+		int32_t *intValue;
+		uint32_t *uintValue;
+
 		char *charValue;
 		double *doubleValue;
 
 	private:
-		void init(){doubleValue = NULL, intValue = NULL, charValue = NULL, intBase = 0;};
+		void init(){doubleValue = NULL, intValue = NULL, uintValue = NULL, charValue = NULL, intBase = 0;};
 };
 
 std::ostream& operator<<(std::ostream &out, const xmlParseRule &rule);

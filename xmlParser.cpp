@@ -36,6 +36,26 @@ enum STRCONV_ERROR str2int (int *i, char const *s, int base)
 	return CONV_SUCCESS;
 }
 
+enum STRCONV_ERROR str2uint (uint32_t *i, char const *s, int base)
+{
+	char *end;
+	unsigned long  l;
+	errno = 0;
+	l = strtoul(s, &end, base);
+					    
+	if ((errno == ERANGE && l == ULONG_MAX) || l > UINT_MAX) {
+		return CONV_OVERFLOW;
+	}
+	
+	if (*s == '\0' || *end != '\0') {
+		return CONV_INCONVERTIBLE;
+	}
+								
+	*i = l;
+	return CONV_SUCCESS;
+}
+
+
 enum STRCONV_ERROR str2double(double *i, char const *s)
 {
 	char *end;
@@ -79,7 +99,12 @@ std::ostream& operator<<(std::ostream &out, const STRCONV_ERROR &error)
 **************************************************************************************/
 bool operator== (const xmlParseRule &lhs, const xmlParseRule &hhs)
 {
-	return ((lhs.key == hhs.key) && (lhs.intBase == hhs.intBase));
+	return ((lhs.key == hhs.key) && \
+			(lhs.intBase == hhs.intBase) && \
+		    (lhs.intValue == hhs.intValue) && \
+			(lhs.uintValue == hhs.uintValue && \
+			(lhs.charValue == hhs.charValue && \
+			(lhs.doubleValue == hhs.doubleValue))));
 }
 
 /**************************************************************************************
@@ -98,6 +123,10 @@ std::ostream& operator<<(std::ostream &out, const xmlParseRule &rule)
 	else if (rule.intValue){
 
 		out << *rule.intValue << "(" << rule.intBase << ")" <<  endl;
+	}
+	else if (rule.uintValue){
+
+		out << *rule.uintValue << "(" << rule.intBase << ")" <<  endl;
 	}
 	else if (rule.doubleValue){
 
@@ -120,7 +149,7 @@ bool xmlParseRule::check(void)
 	}
 
 	/*	Check value target */
-	if (!intValue && !charValue && !doubleValue){
+	if (!intValue &&  !uintValue && !charValue && !doubleValue){
 
 		cerr << "Rule error: value is invalid!" << endl;
 		return false;
@@ -134,7 +163,8 @@ bool xmlParseRule::check(void)
  * ***********************************************************************************/
 bool xmlParseRule::parse(const char* value)
 {
-	int iValue = 0;
+	int32_t iValue = 0;
+	uint32_t uValue = 0;
 	double dValue = 0;
 	enum STRCONV_ERROR result; 
 
@@ -153,6 +183,17 @@ bool xmlParseRule::parse(const char* value)
 		}
 		
 		*intValue = iValue;
+	}
+	/* Value is unsigned int value */
+	else if (uintValue){
+	
+		if ((result = str2uint(&uValue, value, intBase)) != CONV_SUCCESS){
+		
+			cerr << "Parse[" << key << "]\t value is error: " << result << endl;
+			return false;
+		}	
+
+		*uintValue = uValue;
 	}
 	/* Value is double or flost value */
 	else if (doubleValue){
@@ -267,24 +308,24 @@ bool xmlParser::parseValue(XMLElement *root, bool debug, ostream &debugOS)
 	for (rule = valueParserRules.begin(); rule != valueParserRules.end(); rule++){
 
 		/*	Check rule */
-		if (!rule->check())continue;
+		if (!rule->check())return false;
 
 		/* 	Find key */
 		if (!(key = root->FirstChildElement(rule->key.c_str()))){
 
 			cerr << "Parser[" << parserDesc << "]\tUndefined key:" << rule->key << endl;
-			continue;
+			return false;
 		}
 
 		/* 	Find key value ? */
 		if (!(value = key->ToElement()->GetText())){
 
 			cerr << "Parser[" << parserDesc << "]\tKey[" << rule->key << "] value is empty!" << endl;
-			continue;
+			return false;
 		}
 
 		/* Parse rule */ 
-		if (!rule->parse(value)) continue;
+		if (!rule->parse(value)) return false;
 
 		/* Debug output */
 		if (debug) debugOS << *rule << endl;
@@ -316,17 +357,17 @@ bool xmlParser::parseAttr(XMLElement *root, bool debug, ostream &debugOS)
 	for (rule = attrParserRules.begin(); rule != attrParserRules.end(); rule++){
 
 		/* Check rule */
-		if (!rule->check())continue;
+		if (!rule->check())return false;
 
 		/* Find attribute */ 
 		if ((attr = root->Attribute(rule->key.c_str())) == NULL){
 
 			cerr << "Parser[" << parserDesc << "]\tKey[" << rule->key << "] value is empty!" << endl;
-			continue;
+			return false;
 		}
 		
 		/* Parse attrValue */
-		if (!rule->parse(attr)) continue;
+		if (!rule->parse(attr)) return false;
 			
 
 		/* Debug output */

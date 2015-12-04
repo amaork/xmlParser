@@ -1,17 +1,35 @@
-CC			=	g++
-CPPFLAGS	=	-Wall -g  
-TARGETS		=	test
-SOURCES		=	test.cpp
+AR			=	$(CROSS)ar
+CXX			=	$(CROSS)g++
 
+ARFLAGS		=	rcv
+CPPFLAGS	=	-Wall 
+LDSHFLAGS	=	-rdynamic -shared  
+
+SOURCES		=	tinyxml2.cpp xmlParser.cpp	
+OBJECTS		=	$(SOURCES:.cpp=.o)
+
+TARGETS		=	test libxmlparser.a libxmlparser.so
+
+LDSHFLAGS	=	-rdynamic -shared  
+
+.PHONY:all clean 
 
 all:$(TARGETS)
+
 clean:
 	rm -rf *.o $(TARGETS) a.out depend.d 
 
-test:	tinyxml2.o test.o xmlParser.o
+test:	test.o $(OBJECTS)
+	$(CXX) $(CPPFLAGS) -o $@ $^
 
-depend.d:$(SOURCES)
-	$(CC) -M $(CPPFLAGS) $^ > $@
+libxmlparser.a:$(OBJECTS)
+	$(AR) $(ARFLAGS) $@ $^
+
+libxmlparser.so:$(OBJECTS)
+	$(CXX) $(LDSHFLAGS) -o $@ $^
+
+depend.d:$(wildcard *.cpp) $(wildcard *.h)
+	$(CXX) -M $(CPPFLAGS) $^ > $@
 
 -include depend.d
 

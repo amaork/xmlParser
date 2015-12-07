@@ -1,3 +1,6 @@
+-include ../.config
+-include ../config.mk
+
 AR			=	$(CROSS)ar
 CXX			=	$(CROSS)g++
 
@@ -12,7 +15,7 @@ TARGETS		=	test libxmlparser.a libxmlparser.so
 
 LDSHFLAGS	=	-rdynamic -shared  
 
-.PHONY:all clean 
+.PHONY:all clean install 
 
 all:$(TARGETS)
 
@@ -27,6 +30,12 @@ libxmlparser.a:$(OBJECTS)
 
 libxmlparser.so:$(OBJECTS)
 	$(CXX) $(LDSHFLAGS) -o $@ $^
+
+install:libxmlparser.so
+	@echo "Install xmlParser dynamic lib..."
+	@mkdir -p $(LOCAL_PACK_PATH)/$(LIB_PATH)
+	$(if ${LOCAL_PACK_PATH},@cp $^ $(LOCAL_PACK_PATH)/$(LIB_PATH),@cp $^ /usr/local/lib)
+	
 
 depend.d:$(wildcard *.cpp) $(wildcard *.h)
 	$(CXX) -MM $(CPPFLAGS) $^ > $@

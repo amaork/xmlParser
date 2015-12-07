@@ -15,6 +15,8 @@ class xmlParseRule{
 
 	public:
 
+		friend class xmlParser;
+
 		/* Constructor */
 		xmlParseRule(){init();}
 		xmlParseRule(const char *k, char *v){init(); key = k, charValue = v;}
@@ -28,6 +30,11 @@ class xmlParseRule{
 		/* Parse this rule */
 		bool parse(const char* value);
 
+		/* Reload operator */
+		friend ostream& operator<<(ostream& os, const xmlParseRule &rule);
+		friend bool operator==(const xmlParseRule &lhs, const xmlParseRule &hhs); 
+		
+	private:
 		/* Data */
 		string key;
 		int intBase;
@@ -36,12 +43,10 @@ class xmlParseRule{
 
 		char *charValue;
 		double *doubleValue;
-
-	private:
 		void init(){doubleValue = NULL, intValue = NULL, uintValue = NULL, charValue = NULL, intBase = 0;};
 };
 
-std::ostream& operator<<(std::ostream &out, const xmlParseRule &rule);
+
 
 /* Typedef */
 typedef vector< xmlParseRule> ParserRules;
@@ -52,29 +57,35 @@ class xmlParser{
 
 	public:
 
-		/*	Constructor */
+		/* Constructor */
 		xmlParser(const string &desc);
 
-		/*	Parse xml */
+		/* Parse xml */
 		bool parseAttr(XMLElement *root, bool debug = false, ostream &debugOS = cerr);
 		bool parseValue(XMLElement *root, bool debug = false, ostream &debug_os = cerr);
 
-		/*	Add  xml parsing rules */
+		/* Add  xml parsing rules */
 		void addRule(const xmlParseRule &rule);
 		void addAttrRule(const xmlParseRule &rule);
 
-		/*	xml parser desc */
+		/* Clear parsing rules */
+		void clearRules(void){valueParserRules.clear();}
+		void clearAttrRules(void) {attrParserRules.clear();}
+
+		/* Reload output operator */
+		friend ostream& operator<<(ostream &out, const xmlParser &parser);
+
+	private:
+		/* parser desc */
 		string parserDesc;
 
-		/*	xml parse rules */
+		/* xml parse rules */
 		ParserRules  attrParserRules;
 		ParserRules  valueParserRules;
 
-	private:
-		/*	Check parser rules*/
+		/* Check parser rules*/
 		bool checkRules(const XMLElement *root, const ParserRules &rules);
 };
 
-std::ostream& operator<<(std::ostream &out, const xmlParser &parser);
 
 #endif

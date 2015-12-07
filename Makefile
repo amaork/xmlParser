@@ -29,7 +29,7 @@ libxmlparser.so:$(OBJECTS)
 	$(CXX) $(LDSHFLAGS) -o $@ $^
 
 depend.d:$(wildcard *.cpp) $(wildcard *.h)
-	$(CXX) -M $(CPPFLAGS) $^ > $@
+	$(CXX) -MM $(CPPFLAGS) $^ > $@
 
 -include depend.d
 

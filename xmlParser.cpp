@@ -10,7 +10,6 @@
 
 /* Global */
 static const char* debugSplit = "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++";
-enum STRCONV_ERROR{CONV_SUCCESS, CONV_OVERFLOW, CONV_UNDERFLOW, CONV_INCONVERTIBLE};
 std::ostream& operator<<(std::ostream &out, const STRCONV_ERROR &error);
 
 enum STRCONV_ERROR str2int (int *i, char const *s, int base)

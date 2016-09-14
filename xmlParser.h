@@ -87,5 +87,10 @@ class xmlParser{
 		bool checkRules(const XMLElement *root, const ParserRules &rules);
 };
 
+/* String convert functions group */
+enum STRCONV_ERROR{CONV_SUCCESS, CONV_OVERFLOW, CONV_UNDERFLOW, CONV_INCONVERTIBLE};
+enum STRCONV_ERROR str2double(double *i, char const *s);
+enum STRCONV_ERROR str2int (int *i, char const *s, int base);
+enum STRCONV_ERROR str2uint (uint32_t *i, char const *s, int base);
 
 #endif

@@ -5,7 +5,7 @@ AR			=	$(CROSS)ar
 CXX			=	$(CROSS)g++
 
 ARFLAGS		=	rcv
-CPPFLAGS	=	-Wall
+CPPFLAGS	=	-Wall -fPIC
 LDSHFLAGS	=	-rdynamic -shared
 
 SOURCES		=	tinyxml2.cpp xmlParser.cpp

@@ -12,8 +12,7 @@
 static const char *debugSplit = "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++";
 std::ostream &operator<<(std::ostream &out, const STRCONV_ERROR &error);
 
-enum STRCONV_ERROR str2int(int *i, char const *s, int base)
-{
+enum STRCONV_ERROR str2int(int *i, char const *s, int base) {
     char *end;
     long  l;
     errno = 0;
@@ -35,8 +34,7 @@ enum STRCONV_ERROR str2int(int *i, char const *s, int base)
     return CONV_SUCCESS;
 }
 
-enum STRCONV_ERROR str2uint(uint32_t *i, char const *s, int base)
-{
+enum STRCONV_ERROR str2uint(uint32_t *i, char const *s, int base) {
     char *end;
     unsigned long  l;
     errno = 0;
@@ -54,9 +52,30 @@ enum STRCONV_ERROR str2uint(uint32_t *i, char const *s, int base)
     return CONV_SUCCESS;
 }
 
+enum STRCONV_ERROR str2float(float *i, char const *s) {
+    float f;
+    char *end = NULL;
 
-enum STRCONV_ERROR str2double(double *i, char const *s)
-{
+    errno = 0;
+    f = strtof(s, &end);
+
+    if ((errno == ERANGE && f == HUGE_VAL)) {
+        return CONV_OVERFLOW;
+    }
+
+    if ((errno == ERANGE && f == 0)) {
+        return CONV_UNDERFLOW;
+    }
+
+    if (*s == '\0' || *end != '\0') {
+        return CONV_INCONVERTIBLE;
+    }
+
+    *i = f;
+    return CONV_SUCCESS;
+}
+
+enum STRCONV_ERROR str2double(double *i, char const *s) {
     char *end;
     double d;
     errno = 0;
@@ -78,28 +97,67 @@ enum STRCONV_ERROR str2double(double *i, char const *s)
     return CONV_SUCCESS;
 }
 
+enum STRCONV_ERROR str2int64(int64_t *i, char const *s, int base) {
+    char *end;
+    long long l;
 
-std::ostream &operator<<(std::ostream &out, const STRCONV_ERROR &error)
-{
+    errno = 0;
+    l = strtoll(s, &end, base);
+
+    if ((errno == ERANGE && l == LLONG_MAX) || l > LLONG_MAX) {
+        return CONV_OVERFLOW;
+    }
+
+    if ((errno == ERANGE && l == LLONG_MIN) || l < LLONG_MIN) {
+        return CONV_UNDERFLOW;
+    }
+
+    if (*s == '\0' || *end != '\0') {
+        return CONV_INCONVERTIBLE;
+    }
+
+    *i = l;
+    return CONV_SUCCESS;
+}
+
+enum STRCONV_ERROR str2uint64(uint64_t *i, char const *s, int base) {
+    char *end;
+    unsigned long long l;
+
+    errno = 0;
+    l = strtoull(s, &end, base);
+
+    if ((errno == ERANGE && l == ULLONG_MAX) || l > ULLONG_MAX) {
+        return CONV_OVERFLOW;
+    }
+
+    if (*s == '\0' || *end != '\0') {
+        return CONV_INCONVERTIBLE;
+    }
+
+    *i = l;
+    return CONV_SUCCESS;
+}
+
+std::ostream &operator<<(std::ostream &out, const STRCONV_ERROR &error) {
     switch (error) {
-
-        case	CONV_SUCCESS	:
+        case CONV_SUCCESS:
             out << "success" << endl;
             break;
 
-        case	CONV_OVERFLOW	:
+        case CONV_OVERFLOW:
             out << "overflow" << endl;
             break;
 
-        case	CONV_UNDERFLOW	:
+        case CONV_UNDERFLOW:
             out << "underflow" << endl;
             break;
 
-        case	CONV_INCONVERTIBLE:
+        case CONV_INCONVERTIBLE:
             out << "inconvertible" << endl;
             break;
 
-        default					:
+        default	:
             out << "unknow status" << endl;
             break;
     }
@@ -108,54 +166,57 @@ std::ostream &operator<<(std::ostream &out, const STRCONV_ERROR &error)
 }
 
 /* struct parse_rule operator== mothed */
-bool operator== (const xmlParseRule &lhs, const xmlParseRule &hhs)
-{
+bool operator== (const xmlParseRule &lhs, const xmlParseRule &hhs) {
     return ((lhs.key == hhs.key) && \
             (lhs.intValue == hhs.intValue) && \
-            (lhs.uintValue == hhs.uintValue && \
-             (lhs.charValue == hhs.charValue && \
-              (lhs.doubleValue == hhs.doubleValue))));
+            (lhs.uintValue == hhs.uintValue) && \
+            (lhs.int64Value == hhs.int64Value) && \
+            (lhs.uint64Value == hhs.uint64Value) && \
+            (lhs.charValue == hhs.charValue) && \
+            (lhs.floatValue == hhs.floatValue) && \
+            (lhs.doubleValue == hhs.doubleValue));
 }
 
 /* Overloaded operator<< */
-std::ostream &operator<<(std::ostream &out, const xmlParseRule &rule)
-{
-
+std::ostream &operator<<(std::ostream &out, const xmlParseRule &rule) {
     out << "key:\t" << rule.key << "\tvalue\t";
 
     if (rule.charValue) {
-
         out << rule.charValue << endl;
-
     }
     else if (rule.intValue) {
-
         out << *rule.intValue <<  endl;
     }
     else if (rule.uintValue) {
-
         out << *rule.uintValue << endl;
     }
+    else if (rule.int64Value) {
+        out << *rule.int64Value << endl;
+    }
+    else if (rule.uint64Value) {
+        out << *rule.uint64Value << endl;
+    }
+    else if (rule.floatValue) {
+        out.precision(6);
+        out << *rule.floatValue << endl;
+    }
     else if (rule.doubleValue) {
-
+        out.precision(12);
         out << *rule.doubleValue << endl;
     }
 
     return out;
 }
 
-bool xmlParseRule::check(void)
-{
+bool xmlParseRule::check(void) {
     /* 	Check key */
     if (!key.size()) {
-
         cerr << "Rule error: key is empty!" << endl;
         return false;
     }
 
     /*	Check value target */
-    if (!intValue &&  !uintValue && !charValue && !doubleValue) {
-
+    if (!intValue && !uintValue && !int64Value && !uint64Value && !charValue && !floatValue && !doubleValue) {
         cerr << "Rule error: value is invalid!" << endl;
         return false;
     }
@@ -163,45 +224,60 @@ bool xmlParseRule::check(void)
     return true;
 }
 
-bool xmlParseRule::parse(const char *value)
-{
-    double dValue = 0;
+bool xmlParseRule::parse(const char *value) {
+    float fValue = 0.0;
+    double dValue = 0.0;
     int32_t iValue = 0;
     uint32_t uValue = 0;
+    int64_t i64Value = 0;
+    uint64_t u64Value = 0;
     enum STRCONV_ERROR result;
 
-    /* Value is a string */
     if (charValue) {
-
         memcpy(charValue, value, strlen(value));
     }
-    /* Value is int value */
     else if (intValue) {
-
         if ((result = str2int(&iValue, value)) != CONV_SUCCESS) {
-
             cerr << "Parse[" << key << "]\t value is error: " << result << endl;
             return false;
         }
 
         *intValue = iValue;
     }
-    /* Value is unsigned int value */
     else if (uintValue) {
-
         if ((result = str2uint(&uValue, value)) != CONV_SUCCESS) {
-
             cerr << "Parse[" << key << "]\t value is error: " << result << endl;
             return false;
         }
 
         *uintValue = uValue;
     }
-    /* Value is double or flost value */
+    else if (int64Value) {
+        if ((result = str2int64(&i64Value, value)) != CONV_SUCCESS) {
+            cerr << "Parse[" << key << "]\t value is error: " << result << endl;
+            return false;
+        }
+
+        *int64Value = i64Value;
+    }
+    else if (uint64Value) {
+        if ((result = str2uint64(&u64Value, value)) != CONV_SUCCESS) {
+            cerr << "Parse[" << key << "]\t value is error: " << result << endl;
+            return false;
+        }
+
+        *uint64Value = u64Value;
+    }
+    else if (floatValue) {
+        if ((result = str2float(&fValue, value)) != CONV_SUCCESS) {
+            cerr << "Parse[" << key << "]\t value is error: " << result << endl;
+            return false;
+        }
+
+        *floatValue = fValue;
+    }
     else if (doubleValue) {
-
         if ((result = str2double(&dValue, value)) != CONV_SUCCESS) {
-
             cerr << "Parse[" << key << "]\t value is error: " << result << endl;
             return false;
         }
@@ -212,29 +288,32 @@ bool xmlParseRule::parse(const char *value)
     return true;
 }
 
-void xmlParseRule::loadDefaultValue(void)
-{
+void xmlParseRule::loadDefaultValue(void) {
     if (charValue) {
-
         memcpy(charValue, charDefault.c_str(), charDefault.size());
     }
     else if (intValue) {
-
         *intValue = intDefault;
     }
     else if (uintValue) {
-
         *uintValue = uintDefault;
     }
+    else if (int64Value) {
+        *int64Value = int64Default;
+    }
+    else if (uint64Value) {
+        *uint64Value = uint64Default;
+    }
+    else if (floatValue) {
+        *floatValue = floatDefault;
+    }
     else if (doubleValue) {
-
         *doubleValue = doubleDefault;
     }
 }
 
 
-xmlParser::xmlParser(const string &desc)
-{
+xmlParser::xmlParser(const string &desc) {
     /* 	Set parser name */
     parserDesc = desc;
 
@@ -243,28 +322,23 @@ xmlParser::xmlParser(const string &desc)
     valueParserRules.clear();
 }
 
-void xmlParser::addRule(const xmlParseRule &rule)
-{
+void xmlParser::addRule(const xmlParseRule &rule) {
     valueParserRules.push_back(rule);
 }
 
-void xmlParser::addAttrRule(const xmlParseRule &rule)
-{
+void xmlParser::addAttrRule(const xmlParseRule &rule) {
     attrParserRules.push_back(rule);
 }
 
-bool xmlParser::checkRules(const XMLElement *root, const ParserRules &rules)
-{
+bool xmlParser::checkRules(const XMLElement *root, const ParserRules &rules) {
     /*	Check parser rules */
     if (rules.empty()) {
-
         cerr << "Parser[" << parserDesc << "] parse rules linklist is empty!" << endl;
         return false;
     }
 
     /*	Check parser root node */
     if (!root) {
-
         cerr << "Parser[" << parserDesc << "] parse root node unset!" << endl;
         return false;
     }
@@ -273,25 +347,26 @@ bool xmlParser::checkRules(const XMLElement *root, const ParserRules &rules)
 }
 
 
-std::ostream &operator<<(std::ostream &out, const xmlParser &parser)
-{
+std::ostream &operator<<(std::ostream &out, const xmlParser &parser) {
     ParserRules::const_iterator rule_it;
 
     out << "=============================================================" << endl;
     out << "Name:\t" << parser.parserDesc << endl;
 
     if (parser.valueParserRules.size() != 0) {
-
         out << "Value parser rules num: " << parser.valueParserRules.size() << endl;
 
-        for (rule_it = parser.valueParserRules.begin(); rule_it != parser.valueParserRules.end(); rule_it++) out << *rule_it << endl;
+        for (rule_it = parser.valueParserRules.begin(); rule_it != parser.valueParserRules.end(); rule_it++) {
+            out << *rule_it << endl;
+        }
     }
 
     if (parser.attrParserRules.size()) {
-
         out << "Attribute parser rules num: " << parser.attrParserRules.size() << endl;
 
-        for (rule_it = parser.attrParserRules.begin(); rule_it != parser.attrParserRules.end(); rule_it++) out << *rule_it << endl;
+        for (rule_it = parser.attrParserRules.begin(); rule_it != parser.attrParserRules.end(); rule_it++) {
+            out << *rule_it << endl;
+        }
     }
 
     return out;
@@ -304,51 +379,45 @@ std::ostream &operator<<(std::ostream &out, const xmlParser &parser)
 **  #output :   Debug output stream
 **  $return	:	Success return true, else false
 */
-bool xmlParser::parseValue(XMLElement *root, bool debug, ostream &output)
-{
+bool xmlParser::parseValue(XMLElement *root, bool debug, ostream &output) {
     XMLElement *key = NULL;
     const char *value = NULL;
     ParserRules::iterator rule;
 
-    /* Check parser is ready */
-    if (!checkRules(root, valueParserRules))
+    /* Check if parser is ready */
+    if (!checkRules(root, valueParserRules)) {
         return false;
-
+    }
 
     /* Parser each rule form valueParserRules */
     for (rule = valueParserRules.begin(); rule != valueParserRules.end(); rule++) {
-
         /*	Check rule */
         if (!rule->check())
             return false;
 
         /* 	Find key */
         if (!(key = root->FirstChildElement(rule->key.c_str()))) {
-
             rule->loadDefaultValue();
             continue;
         }
 
         /* 	Find key value ? */
         if (!(value = key->ToElement()->GetText())) {
-
             rule->loadDefaultValue();
             continue;
         }
 
         /* Parse rule */
-        if (!rule->parse(value))
+        if (!rule->parse(value)) {
             return false;
-
+        }
     }
 
     /* 	Debug output */
     if (debug) {
-
         output << debugSplit << endl << root->Value() << endl << debugSplit << endl;
 
         for (rule = valueParserRules.begin(); rule != valueParserRules.end(); rule++) {
-
             output << *rule << endl;
         }
     }
@@ -363,41 +432,39 @@ bool xmlParser::parseValue(XMLElement *root, bool debug, ostream &output)
 **  #output :   Debug output stream
 **  $return	:	Success return true, else false
 */
-bool xmlParser::parseAttr(XMLElement *root, bool debug, ostream &output)
-{
+bool xmlParser::parseAttr(XMLElement *root, bool debug, ostream &output) {
     const char *attr = NULL;
     ParserRules::iterator rule;
 
     /* Check parser is ready */
-    if (!checkRules(root, attrParserRules))
+    if (!checkRules(root, attrParserRules)) {
         return false;
+    }
 
     /* Parser each rule from attrParserRules */
     for (rule = attrParserRules.begin(); rule != attrParserRules.end(); rule++) {
-
         /* Check rule */
-        if (!rule->check())
+        if (!rule->check()) {
             return false;
+        }
 
         /* Find attribute */
         if ((attr = root->Attribute(rule->key.c_str())) == NULL) {
-
             rule->loadDefaultValue();
             continue;
         }
 
         /* Parse attrValue */
-        if (!rule->parse(attr))
+        if (!rule->parse(attr)) {
             return false;
+        }
     }
 
     /* Debug output */
     if (debug) {
-
         output << debugSplit << endl << root->Value() << endl << debugSplit << endl;
 
         for (rule = attrParserRules.begin(); rule != attrParserRules.end(); rule++) {
-
             output << *rule << endl;
         }
     }

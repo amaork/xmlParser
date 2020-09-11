@@ -26,7 +26,7 @@ test:	test.o $(OBJECTS)
 	$(CXX) $(CPPFLAGS) -o $@ $^
 
 style:
-	@find -regex '.*/.*\.\(c\|cpp\|h\)$$' | xargs astyle --align-pointer=name --align-reference=name --suffix=none --break-blocks --pad-oper --pad-header --break-blocks --keep-one-line-blocks --indent-switches --indent=tab=4
+	@find -regex '.*/.*\.\(c\|cpp\|h\)$$' | xargs astyle --align-pointer=name --align-reference=name --suffix=none --break-blocks --pad-oper --pad-header --break-blocks --keep-one-line-blocks --indent-switches --indent=spaces
 
 libxmlparser.a:$(OBJECTS)
 	$(AR) $(ARFLAGS) $@ $^

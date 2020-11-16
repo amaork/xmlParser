@@ -4,14 +4,16 @@
 
 void test_decode_char(XMLElement *root, XMLElement *attribute) {
     xmlParser parser(__func__);
-    char value[32], attr[32], def[32];
+    char value[32], attr[32], def[32], buffer[4] = {0};
 
-    parser.addRule(xmlParseRule("STRING", value));
-    parser.addAttrRule(xmlParseRule("string", attr));
-    parser.addAttrRule(xmlParseRule("default", def, "default"));
+    parser.addRule(xmlParseRule("STRING", value, sizeof(value)));
+    parser.addAttrRule(xmlParseRule("string", attr, sizeof(attr)));
+    parser.addAttrRule(xmlParseRule("default", def, sizeof(def), "default"));
+    parser.addAttrRule(xmlParseRule("default", buffer, sizeof(buffer), "default"));
 
     UNITTEST_ASSERT_EQ(parser.parseValue(root), true);
     UNITTEST_ASSERT_EQ(parser.parseAttr(attribute), true);
+    UNITTEST_ASSERT_STR_EQ(buffer, "def", strlen("def"));
     UNITTEST_ASSERT_STR_EQ(def, "default", strlen("default"));
     UNITTEST_ASSERT_STR_EQ(attr, "xmlParser", strlen("xmlParser"));
     UNITTEST_ASSERT_STR_EQ(value, "xmlParser", strlen("xmlParser"));

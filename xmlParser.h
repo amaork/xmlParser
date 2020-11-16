@@ -14,20 +14,38 @@ using namespace tinyxml2;
 class xmlParseRule {
 
 public:
-    friend class xmlParser;
-
     /* Constructor */
-    xmlParseRule() {init();}
-    xmlParseRule(const char *k, char *v, const string &def = "") {init(); key = k, charValue = v, charDefault = def;}
+    xmlParseRule(const char *k, char *v, size_t size, const string &def = "") :
+        m_key(k), m_valueType(Str), m_charValue(v), m_charDefault(def), m_charValueSize(size) {
+    }
 
-    xmlParseRule(const char *k, float *v, float def = 0.0) {init(); key = k, floatValue = v, floatDefault = def;}
-    xmlParseRule(const char *k, double *v, double def = 0.0) {init(); key = k, doubleValue = v, doubleDefault = def;}
+    xmlParseRule(const char *k, float *v, float def = 0.0) : m_key(k), m_valueType(F32) {
+        m_valuePtr.f32 = v, m_defValue.f32 = def;
+    }
 
-    xmlParseRule(const char *k, int32_t *v, int32_t def = 0) {init(); key = k, intValue = v, intDefault = def;}
-    xmlParseRule(const char *k, uint32_t *v, uint32_t def = 0) {init(); key = k, uintValue = v, uintDefault = def;}
+    xmlParseRule(const char *k, double *v, double def = 0.0) : m_key(k), m_valueType(D64) {
+        m_valuePtr.d64 = v, m_defValue.d64 = def;
+    }
 
-    xmlParseRule(const char *k, int64_t *v, int64_t def = 0) {init(); key = k, int64Value = v, int64Default = def;}
-    xmlParseRule(const char *k, uint64_t *v, uint64_t def = 0) {init(); key = k, uint64Value = v, uint64Default = def;}
+    xmlParseRule(const char *k, int32_t *v, int32_t def = 0) : m_key(k), m_valueType(I32) {
+        m_valuePtr.i32 = v, m_defValue.i32 = def;
+    }
+
+    xmlParseRule(const char *k, int64_t *v, int64_t def = 0) : m_key(k), m_valueType(I64) {
+        m_valuePtr.i64 = v, m_defValue.i64 = def;
+    }
+
+    xmlParseRule(const char *k, uint32_t *v, uint32_t def = 0) : m_key(k), m_valueType(U32) {
+        m_valuePtr.u32 = v, m_defValue.u32 = def;
+    }
+
+    xmlParseRule(const char *k, uint64_t *v, uint64_t def = 0) : m_key(k), m_valueType(U64) {
+        m_valuePtr.u64 = v, m_defValue.u64 = def;
+    }
+
+    const char *key() const {
+        return m_key.c_str();
+    }
 
     /* Check this rule is valid */
     bool check(void);
@@ -43,24 +61,34 @@ public:
     friend bool operator==(const xmlParseRule &lhs, const xmlParseRule &hhs);
 
 private:
+    string m_key;
+
+    enum {
+        None, Str, F32, D64, I32, I64, U32, U64
+    } m_valueType;
+
+    union {
+        float *f32;
+        double *d64;
+        int32_t *i32;
+        int64_t *i64;
+        uint32_t *u32;
+        uint64_t *u64;
+    } m_valuePtr;
+
+    union {
+        float f32;
+        double d64;
+        int32_t i32;
+        int64_t i64;
+        uint32_t u32;
+        uint64_t u64;
+    } m_defValue;
+
     /* Data */
-    string key;
-    char *charValue;
-    string charDefault;
-
-    float *floatValue, floatDefault;
-    double *doubleValue, doubleDefault;
-
-    int32_t *intValue, intDefault;
-    uint32_t *uintValue, uintDefault;
-
-    int64_t *int64Value, int64Default;
-    uint64_t *uint64Value, uint64Default;
-
-    void init() {
-        intDefault = uintDefault = doubleDefault = floatDefault = int64Default = uint64Default = 0;
-        intValue = NULL, uintValue = NULL, doubleValue = NULL, floatValue = NULL, int64Value = NULL, uint64Value = NULL, charValue = NULL;
-    }
+    char *m_charValue;
+    string m_charDefault;
+    size_t m_charValueSize;
 };
 
 /* Typedef */

@@ -63,7 +63,7 @@ int main(int argc, char **argv) {
     parser.addRule(xmlParseRule("OCT", &octNum));
     parser.addRule(xmlParseRule("HEX", &hexNum));
     parser.addRule(xmlParseRule("NUM", &number));
-    parser.addRule(xmlParseRule("STRING", str));
+    parser.addRule(xmlParseRule("STRING", str, sizeof(str)));
     parser.addRule(xmlParseRule("DOUBLE", &dvalue, 1.23456789));
     parser.addRule(xmlParseRule("FLOAT", &fvalue, 1.234567));
     parser.addRule(xmlParseRule("ATTRIBUTE", &attrNum));
@@ -73,7 +73,7 @@ int main(int argc, char **argv) {
     memset(str, 0, sizeof(str));
     decNum = octNum = hexNum = number = attrNum = dvalue = 0;
 
-    parser.addAttrRule(xmlParseRule("str", str));
+    parser.addAttrRule(xmlParseRule("str", str, sizeof(str)));
     parser.addAttrRule(xmlParseRule("i64", &i64));
     parser.addAttrRule(xmlParseRule("u64", &u64));
     parser.addAttrRule(xmlParseRule("dec", &decNum));

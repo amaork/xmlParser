@@ -167,56 +167,72 @@ std::ostream &operator<<(std::ostream &out, const STRCONV_ERROR &error) {
 
 /* struct parse_rule operator== mothed */
 bool operator== (const xmlParseRule &lhs, const xmlParseRule &hhs) {
-    return ((lhs.key == hhs.key) && \
-            (lhs.intValue == hhs.intValue) && \
-            (lhs.uintValue == hhs.uintValue) && \
-            (lhs.int64Value == hhs.int64Value) && \
-            (lhs.uint64Value == hhs.uint64Value) && \
-            (lhs.charValue == hhs.charValue) && \
-            (lhs.floatValue == hhs.floatValue) && \
-            (lhs.doubleValue == hhs.doubleValue));
+    return ((lhs.m_key == hhs.m_key) && \
+            (lhs.m_valueType == hhs.m_valueType) && \
+            (lhs.m_defValue.d64 == hhs.m_defValue.d64) && \
+            (lhs.m_valuePtr.d64 == hhs.m_valuePtr.d64) && \
+            (lhs.m_charValue == hhs.m_charValue) && \
+            (lhs.m_charDefault == hhs.m_charDefault) && \
+            (lhs.m_charValueSize == hhs.m_charValueSize));
 }
 
 /* Overloaded operator<< */
 std::ostream &operator<<(std::ostream &out, const xmlParseRule &rule) {
-    out << "key:\t" << rule.key << "\tvalue\t";
+    out << "key:\t" << rule.m_key << "\tvalue\t";
 
-    if (rule.charValue) {
-        out << rule.charValue << endl;
-    }
-    else if (rule.intValue) {
-        out << *rule.intValue <<  endl;
-    }
-    else if (rule.uintValue) {
-        out << *rule.uintValue << endl;
-    }
-    else if (rule.int64Value) {
-        out << *rule.int64Value << endl;
-    }
-    else if (rule.uint64Value) {
-        out << *rule.uint64Value << endl;
-    }
-    else if (rule.floatValue) {
-        out.precision(6);
-        out << *rule.floatValue << endl;
-    }
-    else if (rule.doubleValue) {
-        out.precision(12);
-        out << *rule.doubleValue << endl;
+    switch (rule.m_valueType) {
+        case xmlParseRule::Str:
+            out << rule.m_charValue << endl;
+            break;
+
+        case xmlParseRule::F32:
+            out.precision(6);
+            out << *rule.m_valuePtr.f32 << endl;
+            break;
+
+        case xmlParseRule::D64:
+            out.precision(12);
+            out << *rule.m_valuePtr.d64 << endl;
+            break;
+
+        case xmlParseRule::I32:
+            out << *rule.m_valuePtr.i32 << endl;
+            break;
+
+        case xmlParseRule::I64:
+            out << *rule.m_valuePtr.i64 << endl;
+            break;
+
+        case xmlParseRule::U32:
+            out << *rule.m_valuePtr.u32 << endl;
+            break;
+
+        case xmlParseRule::U64:
+            out << *rule.m_valuePtr.u64 << endl;
+            break;
+
+        default:
+            out << "None" << endl;
     }
 
     return out;
 }
 
 bool xmlParseRule::check(void) {
-    /* 	Check key */
-    if (!key.size()) {
+    /* Check key */
+    if (!m_key.size()) {
         cerr << "Rule error: key is empty!" << endl;
         return false;
     }
 
+    /* Check value type */
+    if (m_valueType == None) {
+        cerr << "Rule error: value type is None" << endl;
+        return false;
+    }
+
     /*	Check value target */
-    if (!intValue && !uintValue && !int64Value && !uint64Value && !charValue && !floatValue && !doubleValue) {
+    if (!m_charValue && !m_valuePtr.d64) {
         cerr << "Rule error: value is invalid!" << endl;
         return false;
     }
@@ -225,90 +241,100 @@ bool xmlParseRule::check(void) {
 }
 
 bool xmlParseRule::parse(const char *value) {
-    float fValue = 0.0;
-    double dValue = 0.0;
-    int32_t iValue = 0;
-    uint32_t uValue = 0;
-    int64_t i64Value = 0;
-    uint64_t u64Value = 0;
     enum STRCONV_ERROR result;
 
-    if (charValue) {
-        memcpy(charValue, value, strlen(value));
-    }
-    else if (intValue) {
-        if ((result = str2int(&iValue, value)) != CONV_SUCCESS) {
-            cerr << "Parse[" << key << "]\t value is error: " << result << endl;
-            return false;
-        }
+    switch (m_valueType) {
+        case Str:
+            snprintf(m_charValue, m_charValueSize, "%s", value);
+            break;
 
-        *intValue = iValue;
-    }
-    else if (uintValue) {
-        if ((result = str2uint(&uValue, value)) != CONV_SUCCESS) {
-            cerr << "Parse[" << key << "]\t value is error: " << result << endl;
-            return false;
-        }
+        case I32:
+            if ((result = str2int(m_valuePtr.i32, value)) != CONV_SUCCESS) {
+                cerr << "Parse[" << m_key << "]\t value is error: " << result << endl;
+                return false;
+            }
 
-        *uintValue = uValue;
-    }
-    else if (int64Value) {
-        if ((result = str2int64(&i64Value, value)) != CONV_SUCCESS) {
-            cerr << "Parse[" << key << "]\t value is error: " << result << endl;
-            return false;
-        }
+            break;
 
-        *int64Value = i64Value;
-    }
-    else if (uint64Value) {
-        if ((result = str2uint64(&u64Value, value)) != CONV_SUCCESS) {
-            cerr << "Parse[" << key << "]\t value is error: " << result << endl;
-            return false;
-        }
+        case U32:
+            if ((result = str2uint(m_valuePtr.u32, value)) != CONV_SUCCESS) {
+                cerr << "Parse[" << m_key << "]\t value is error: " << result << endl;
+                return false;
+            }
 
-        *uint64Value = u64Value;
-    }
-    else if (floatValue) {
-        if ((result = str2float(&fValue, value)) != CONV_SUCCESS) {
-            cerr << "Parse[" << key << "]\t value is error: " << result << endl;
-            return false;
-        }
+            break;
 
-        *floatValue = fValue;
-    }
-    else if (doubleValue) {
-        if ((result = str2double(&dValue, value)) != CONV_SUCCESS) {
-            cerr << "Parse[" << key << "]\t value is error: " << result << endl;
-            return false;
-        }
+        case I64:
+            if ((result = str2int64(m_valuePtr.i64, value)) != CONV_SUCCESS) {
+                cerr << "Parse[" << m_key << "]\t value is error: " << result << endl;
+                return false;
+            }
 
-        *doubleValue = dValue;
+            break;
+
+        case U64:
+            if ((result = str2uint64(m_valuePtr.u64, value)) != CONV_SUCCESS) {
+                cerr << "Parse[" << m_key << "]\t value is error: " << result << endl;
+                return false;
+            }
+
+            break;
+
+        case F32:
+            if ((result = str2float(m_valuePtr.f32, value)) != CONV_SUCCESS) {
+                cerr << "Parse[" << m_key << "]\t value is error: " << result << endl;
+                return false;
+            }
+
+            break;
+
+        case D64:
+            if ((result = str2double(m_valuePtr.d64, value)) != CONV_SUCCESS) {
+                cerr << "Parse[" << m_key << "]\t value is error: " << result << endl;
+                return false;
+            }
+
+            break;
+
+        default:
+            return false;
     }
 
     return true;
 }
 
 void xmlParseRule::loadDefaultValue(void) {
-    if (charValue) {
-        memcpy(charValue, charDefault.c_str(), charDefault.size());
-    }
-    else if (intValue) {
-        *intValue = intDefault;
-    }
-    else if (uintValue) {
-        *uintValue = uintDefault;
-    }
-    else if (int64Value) {
-        *int64Value = int64Default;
-    }
-    else if (uint64Value) {
-        *uint64Value = uint64Default;
-    }
-    else if (floatValue) {
-        *floatValue = floatDefault;
-    }
-    else if (doubleValue) {
-        *doubleValue = doubleDefault;
+    switch (m_valueType) {
+        case Str:
+            snprintf(m_charValue, m_charValueSize, "%s", m_charDefault.c_str());
+            break;
+
+        case F32:
+            *m_valuePtr.f32 = m_defValue.f32;
+            break;
+
+        case D64:
+            *m_valuePtr.d64 = m_defValue.d64;
+            break;
+
+        case I32:
+            *m_valuePtr.i32 = m_defValue.i32;
+            break;
+
+        case I64:
+            *m_valuePtr.i64 = m_defValue.i64;
+            break;
+
+        case U32:
+            *m_valuePtr.u32 = m_defValue.u32;
+            break;
+
+        case U64:
+            *m_valuePtr.u64 = m_defValue.u64;
+            break;
+
+        default:
+            return;
     }
 }
 
@@ -396,7 +422,7 @@ bool xmlParser::parseValue(XMLElement *root, bool debug, ostream &output) {
             return false;
 
         /* 	Find key */
-        if (!(key = root->FirstChildElement(rule->key.c_str()))) {
+        if (!(key = root->FirstChildElement(rule->key()))) {
             rule->loadDefaultValue();
             continue;
         }
@@ -449,7 +475,7 @@ bool xmlParser::parseAttr(XMLElement *root, bool debug, ostream &output) {
         }
 
         /* Find attribute */
-        if ((attr = root->Attribute(rule->key.c_str())) == NULL) {
+        if ((attr = root->Attribute(rule->key())) == NULL) {
             rule->loadDefaultValue();
             continue;
         }

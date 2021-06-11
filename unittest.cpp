@@ -111,13 +111,13 @@ void test_decode_int64_t(XMLElement *root, XMLElement *attribute) {
 
     parser.addRule(xmlParseRule("I64", &value));
     parser.addAttrRule(xmlParseRule("i64", &attr));
-    parser.addAttrRule(xmlParseRule("default", &def, 1456789321243));
+    parser.addAttrRule(xmlParseRule("default", &def, 1456789321243LL));
 
     UNITTEST_ASSERT_EQ(parser.parseValue(root), true);
     UNITTEST_ASSERT_EQ(parser.parseAttr(attribute), true);
-    UNITTEST_ASSERT_EQ(def, 1456789321243);
-    UNITTEST_ASSERT_EQ(value, -1234567891233);
-    UNITTEST_ASSERT_EQ(attr, -1234589343434);
+    UNITTEST_ASSERT_EQ(def, 1456789321243LL);
+    UNITTEST_ASSERT_EQ(value, -1234567891233LL);
+    UNITTEST_ASSERT_EQ(attr, -1234589343434LL);
 
     UNITTEST_AUTO_PASS();
 }
@@ -128,13 +128,13 @@ void test_decode_uint64_t(XMLElement *root, XMLElement *attribute) {
 
     parser.addRule(xmlParseRule("U64", &value));
     parser.addAttrRule(xmlParseRule("u64", &attr));
-    parser.addAttrRule(xmlParseRule("default", &def, 134456789321));
+    parser.addAttrRule(xmlParseRule("default", &def, 134456789321LL));
 
     UNITTEST_ASSERT_EQ(parser.parseValue(root), true);
     UNITTEST_ASSERT_EQ(parser.parseAttr(attribute), true);
-    UNITTEST_ASSERT_EQ(def, 134456789321);
-    UNITTEST_ASSERT_EQ(value, 19008000000);
-    UNITTEST_ASSERT_EQ(attr, 0x123456789ABC);
+    UNITTEST_ASSERT_EQ(def, 134456789321LL);
+    UNITTEST_ASSERT_EQ(value, 19008000000LL);
+    UNITTEST_ASSERT_EQ(attr, 0x123456789ABCLL);
 
     UNITTEST_AUTO_PASS();
 }
